@@ -18,7 +18,7 @@ graph TD
     C --> D[👥 Link Customer Data]
     D --> E[💾 Store in Supabase]
     E --> F[📊 Vector Database Ready]
-
+```
 
 Key Features:
 ✅ Automated PDF Processing: Batch processing of multiple PDF files
@@ -32,6 +32,8 @@ Key Features:
 🎯 Purpose 
 Process incoming emails with purchase order PDFs, match customers using similarity search, extract order data, and automatically create orders in Unleashed software with comprehensive logging.
 
+```mermaid
+graph TD
     A[📧 Email Received] --> B[📎 Extract PDF Attachment]
     B --> C[📝 Extract Content]
     C --> D[🧠 Generate Query Embedding]
