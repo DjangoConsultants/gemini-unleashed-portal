@@ -1,15 +1,16 @@
 # 📦 Purchase Order Automation System
 
-## 📋 Overview  
-This project implements two automated workflows for processing purchase orders from PDF documents, using AI embeddings for customer matching, and integrating with Supabase and Unleashed software.
+## 📋 Overview
+This project provides two automated workflows for processing purchase orders from PDF documents. It leverages AI embeddings for customer matching and integrates with **Supabase** for data storage and **Unleashed** software for order management.
 
 ---
 
-## 🚀 Workflow 1: PDF Embedding & Customer Data Storage  
+## 🚀 Workflow 1: PDF Embedding & Customer Data Storage
 
-🎯 **Purpose**  
-Extract and embed purchase order data from PDF files, then store the vectorized data along with customer information in Supabase for future similarity matching.
+### Description
+**Purpose**: Extract and embed purchase order data from PDF files, then store the vectorized data along with customer information in Supabase for efficient similarity matching.
 
+### Workflow Diagram
 ```mermaid
 graph TD
     A[📄 PDF Input] --> B[📝 Extract Text Data]
@@ -19,12 +20,12 @@ graph TD
     E --> F[📊 Vector Database Ready]
 
 
-Key Features:\n
-✅ Automated PDF Processing: Batch processing of multiple PDF files\n
-✅ Vector Embedding: High-quality embeddings for similarity matching\n
-✅ Customer Association: Link orders to existing customer records\n
-✅ Metadata Storage: Store additional order details and context\n
-✅ Scalable Architecture: Handle large volumes of documents\n
+Key Features:
+✅ Automated PDF Processing: Batch processing of multiple PDF files
+✅ Vector Embedding: High-quality embeddings for similarity matching
+✅ Customer Association: Link orders to existing customer records
+✅ Metadata Storage: Store additional order details and context
+✅ Scalable Architecture: Handle large volumes of documents
 
 ## 📧 Workflow 2: Email Processing & Order Management
 
