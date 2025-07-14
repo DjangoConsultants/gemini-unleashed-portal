@@ -1,0 +1,976 @@
+{
+  "name": "Alex | Holloway Group AI Automation | PDF Embedding",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1IkkueIpyiWfobQHKUqhNdE0oOzvdxw6E",
+          "mode": "list",
+          "cachedResultName": "N8N Test",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1IkkueIpyiWfobQHKUqhNdE0oOzvdxw6E"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        -100
+      ],
+      "id": "0cc9ba5c-5d3a-44e8-9298-15e1996710f1",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "b43IOEtTDJY9rkVp",
+          "name": "Credential Google Drive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## PDF Embedding\n",
+        "height": 1480,
+        "width": 8880,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -300,
+        -1200
+      ],
+      "typeVersion": 1,
+      "id": "768a879b-09db-40d4-8a7f-02caf3dc624e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "eee0fe2a-668e-41a7-acfb-c4837ffcaba4",
+              "leftValue": "={{ $binary.data.fileExtension }}",
+              "rightValue": "xlsx",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "b861268c-c44c-4ee5-aabc-0f53ae9143bd",
+              "leftValue": "={{ $binary.data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "4c4a8190-1ce2-4858-b605-bd732231d082",
+              "leftValue": "={{ $binary.data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        180,
+        -340
+      ],
+      "id": "9384cf81-ddd0-479f-8066-61b7a8a0e361",
+      "name": "Check  File Extension"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "412c607e-ec64-488e-b6e5-ea8720dc6b2f",
+              "leftValue": "={{ $input.all().length}}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        820,
+        -400
+      ],
+      "id": "705e7997-853b-4bb9-9d53-e3e3c43af197",
+      "name": "Check Extracted Data Length"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        8320,
+        -40
+      ],
+      "id": "218b0edd-20bb-4cfd-ac72-9a96e9617161",
+      "name": "Wait 5 Second",
+      "webhookId": "4b8c1d31-4aa6-485f-b616-9eb3956fa3a0"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"Maharati Mind (⚙️ System Notification) <noreply@maharatimind.com>\",\n  \"to\": [\n    \"otmanedev5@gmail.com\",\n    \"sammy@djangoconsultants.net\"\n  ],\n  \"subject\": \"🚫 Failed Due to File Issue: {{ $json.originalFilename }}\",\n  \"html\": \"<div style=\\\"font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e67e22; border-radius: 8px; padding: 20px; background-color: #fffaf2; margin-top: 10px;\\\"><h2 style=\\\"color: #d35400; margin-bottom: 15px;\\\">⚠️ Customer Creation Failure</h2><p style=\\\"font-size: 16px; color: #333; margin-bottom: 20px;\\\">Dear Team,</p><p style=\\\"font-size: 16px; color: #333; margin-bottom: 20px;\\\">The operation to create customers failed due to an issue while reading the provided Excel file. Please verify that the file is accessible and correctly formatted.</p><p style=\\\"font-size: 14px; color: #555; margin-bottom: 10px;\\\"><strong>File Name:</strong> {{ $json.originalFilename }}</p><p style=\\\"font-size: 14px; color: #555; margin-bottom: 20px;\\\"><strong>File Link:</strong> <a href=\\\"{{ $json.webViewLink }}\\\" style=\\\"color: #d35400; text-decoration: none;\\\">View File</a></p><div style=\\\"background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin: 0; color: #856404; font-size: 14px;\\\"><strong>🚨 Action Required:</strong> Please check if the file format is supported and not corrupted. Ensure all required fields for customer creation are properly filled in.</p></div><div style=\\\"background-color: #e8f5e8; border: 1px solid #c3e6c3; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin: 0; color: #2d5a2d; font-size: 14px;\\\"><strong>📌 Tip:</strong> Excel files must be in .xlsx format with valid headers. Avoid merged cells and blank headers.</p></div><div style=\\\"background-color: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin-bottom: 10px;\\\">Best regards,</p><p><strong>Maharati Mind System</strong><br>www.maharatimind.com</p></div><p style=\\\"margin-top: 30px; font-size: 13px; color: #888; text-align: center;\\\">This is an automated notification from the Maharati Mind file validation system.</p></div>\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1060,
+        20
+      ],
+      "id": "1270e94b-2168-46ba-81a8-80825ce2dd27",
+      "name": "Notif Client The Prossecing file fail",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "8KgtMUq5fRaJWhJt",
+          "name": "GHL Authorization"
+        },
+        "httpHeaderAuth": {
+          "id": "wZddnI5hbGPbc9K4",
+          "name": "Resend Authorization"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Initialize the array from the node's context or use an empty array\nlet list_customer_code = [];\n// Get the current element's CODE\nconst code = $('Loop Over Customers').first().json.Code;\nconst status = \"Fail\";\n\nif($('Customers with Processing Failures').isExecuted){\n  if($('Customers with Processing Failures')?.all()?.length){\n  list_customer_code = $('Customers with Processing Failures')?.first().json.list_customer_code\n}\n// Validate that the URL exists\nif (!code) {\n  throw new Error(\"No 'link' field found in the input from 'Post Listing Wordpress' node\");\n}\n// Append the URL to the array\nlist_customer_code.push({\n  code,status\n});\n// Return the current item with the updated arrayd\nreturn [{ json: { list_customer_code: list_customer_code } }];\n} else {\n  return [{ json: { list_customer_code: [{\n      code,status\n  }] } }];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7220,
+        -40
+      ],
+      "id": "97a8737b-3eee-45c0-8b16-54ff3e8e8ba2",
+      "name": "Customers with Processing Failures"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -20,
+        -100
+      ],
+      "id": "c71c1d6c-e958-42ed-a309-dfc0cb68a259",
+      "name": "Download  Excel",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "b43IOEtTDJY9rkVp",
+          "name": "Credential Google Drive"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyA_DnmG2BkL6CUT-cd9F-wfS8CrTDQaRVc"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Extract the following information from the provided PDF document with high accuracy. Focus on identifying details related to the company that sent the PDF. Return the results in a structured JSON format under a key called 'companies'. Each company should be listed as a separate object within the 'companies' array, with clear labels for each category. Only include information that is explicitly found in the PDF. Do not include placeholders like 'Not found' or 'N/A' for missing data. Prioritize the following:\\n\\nCompany Address: Any physical or mailing address associated with the company (e.g., street, city, state, country, postal code).\\nEmail Addresses: Any email addresses linked to the company (e.g., contact@company.com, info@company.com).\\nPhone Numbers: Any phone numbers associated with the company (e.g., office, toll-free, or mobile numbers, including country codes if available).\\nOther Company Information: Additional relevant details about the company, such as:\\n- Company name\\n- Website URL\\n- Contact names or titles (e.g., CEO, manager)\\n- Social media handles or links\\n- Any other identifiable company-related data (e.g., registration number, VAT ID)\\n\\nEnsure the output is organized, readable, and free of errors. If the PDF contains multiple companies, include each company as a separate object in the 'companies' array.\"\n        },\n        {\n          \"inlineData\": {\n            \"mimeType\": \"application/pdf\",\n            \"data\": \"{{ $json.base64_file }}\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4080,
+        -760
+      ],
+      "id": "8807401c-5042-4105-a7a3-f0df830c53fb",
+      "name": "HTTP Request - Model Gemini - Extract Data",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "29fcacec-cfe5-40c0-a623-a0cebf05bf59",
+              "leftValue": "={{ $json.Code.toString() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "6b29a01a-a5c3-4e97-a4d1-3d68901d5a4f",
+              "leftValue": "={{ $json.Link }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1840,
+        -260
+      ],
+      "id": "9a58f0c5-b85a-4f76-8343-46114c54b38d",
+      "name": "Check Data Exist"
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "destinationKey": "base64_file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        3440,
+        -780
+      ],
+      "id": "ffc35540-2ad0-4ea2-8536-b5448466c4cd",
+      "name": "Extract from Base64"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        500,
+        -500
+      ],
+      "id": "4bddd27a-380b-4b3b-9925-c3301b48b869",
+      "name": "Extract from Excel"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/embeddings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": \"{{ $input.all().map(item => item.json.paragraph).join(\"  \") }}\",\n  \"model\": \"text-embedding-3-small\"\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5140,
+        -1000
+      ],
+      "id": "b2772b4a-12e6-4645-8a8a-cab2e64910d2",
+      "name": "OpenAI embedding endpoint",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "8KgtMUq5fRaJWhJt",
+          "name": "GHL Authorization"
+        },
+        "httpBearerAuth": {
+          "id": "5PqWvffFuOPXHJYp",
+          "name": "OpenAI Authorization"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const rawJson = $input.first().json.candidates[0].content.parts[0].text.replace(/```json|```/g, \"\").trim();\n  const data = JSON.parse(rawJson);\n\n  return data.companies.map(company => {\n    let paragraph = \"\";\n\n    for (const key in company) {\n      const value = company[key];\n\n      if (Array.isArray(value)) {\n        paragraph += `${key.replace(/s$/, \"\")}: ${value.join(\", \")}  `;\n      } else if (typeof value === 'object' && value !== null) {\n        for (const nestedKey in value) {\n          paragraph += `${nestedKey}: ${value[nestedKey]}  `;\n        }\n      } else if (typeof value === 'string') {\n        paragraph += `${key}: ${value.replace(/\\n/g, \" \")}  `;\n      } else {\n        paragraph += `${key}: ${value}  `;\n      }\n    }\n\n    return { json: { paragraph: paragraph.trim() } };\n  });\n} catch (error) {\n   throw new Error(error.message);\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4580,
+        -900
+      ],
+      "id": "26fc94c7-8e79-4b2e-8a83-93f04c1a091c",
+      "name": "Simulate the Gemini API response",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1320,
+        -320
+      ],
+      "id": "5b28c279-60c6-4cf4-8f19-c35bd42e8edc",
+      "name": "Loop Over Customers"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8e85436f-757c-421a-afee-f2ff1b4d560a",
+              "leftValue": "={{ $binary.data }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "2a07588b-1f16-46ce-b051-b5516df57d8a",
+              "leftValue": "={{ $binary.data.fileExtension }}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "179a23ed-4678-4ffa-a7d2-e1d00dca1b9a",
+              "leftValue": "={{ $binary.data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2660,
+        -680
+      ],
+      "id": "40a33007-b375-40f8-aed9-1040550a8684",
+      "name": "Check File Extension"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b88bba84-db8d-4b04-852d-178b057a4642",
+              "leftValue": "={{$json.fail}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2100,
+        -920
+      ],
+      "id": "1dc07fde-0b57-4541-978e-7409a2b5fa79",
+      "name": "Check Some Customer Fail To Precessing"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.Link }}",
+          "mode": "url"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2340,
+        -560
+      ],
+      "id": "0fd755de-1d47-4cd8-afe1-cba5d23faed9",
+      "name": "Download PDF",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "b43IOEtTDJY9rkVp",
+          "name": "Credential Google Drive"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"Maharati Mind (⚙️ System Notification) <noreply@maharatimind.com>\",\n  \"to\": [\n    \"otmanedev5@gmail.com\",\n    \"sammy@djangoconsultants.net\"\n  ],\n  \"subject\": \"🚫 Customer Processing Failure\",\n  \"html\": \"<div style=\\\"font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e67e22; border-radius: 8px; padding: 20px; background-color: #fffaf2; margin-top: 10px;\\\"><h2 style=\\\"color: #d35400; margin-bottom: 15px;\\\">⚠️ Customer Processing Issue</h2><p style=\\\"font-size: 16px; color: #333; margin-bottom: 20px;\\\">Dear Team,</p><p style=\\\"font-size: 16px; color: #333; margin-bottom: 20px;\\\">We've identified customer entries in the attached Excel file that failed to process during the workflow. This issue requires review to correct and reprocess the file.</p><div style=\\\"background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin: 0; color: #856404; font-size: 14px;\\\"><strong>🚨 Action Required:</strong> Please review the failed rows and correct any formatting or missing data. Once fixed, re-upload the file for reprocessing.</p></div><div style=\\\"background-color: #e8f5e8; border: 1px solid #c3e6c3; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin: 0; color: #2d5a2d; font-size: 14px;\\\"><strong>📌 Tip:</strong> Ensure required fields are complete and formatted as expected (e.g., date, email, phone number).</p></div><div style=\\\"background-color: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin-bottom: 10px;\\\">Best regards,</p><p><strong>Maharati Mind System</strong><br>www.maharatimind.com</p></div><p style=\\\"margin-top: 30px; font-size: 13px; color: #888; text-align: center;\\\">This is an automated notification from the Maharati Mind file validation system.</p></div>\",\n  \"attachments\": [\n    {\n      \"filename\": \"failed_customers.xlsx\",\n      \"content\": \"{{ $json.base64_file }}\"\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3240,
+        -1140
+      ],
+      "id": "2550e2d8-4687-4e2e-8983-898f614422f6",
+      "name": "System Notification",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "5PqWvffFuOPXHJYp",
+          "name": "OpenAI Authorization"
+        },
+        "httpHeaderAuth": {
+          "id": "wZddnI5hbGPbc9K4",
+          "name": "Resend Authorization"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "undefined",
+        "destinationKey": "base64_file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        -1140
+      ],
+      "id": "5f8c867b-1fde-4558-96f9-1583bb3d8448",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "={{$('Customers with Processing Failures').first().item.json.list_customer_code}}",
+        "options": {
+          "fileName": "Customers Not Processing",
+          "sheetName": "Customers Not Processing"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2500,
+        -1140
+      ],
+      "id": "e3106487-eb2b-4b6f-ba04-6a221698be4d",
+      "name": "Create Excel"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"Maharati Mind (⚙️ System Notification) <noreply@maharatimind.com>\",\n  \"to\": [\n    \"otmanedev5@gmail.com\",\n    \"sammy@djangoconsultants.net\"\n  ],\n  \"subject\": \"✅ Customer Processing Completed Successfully\",\n  \"html\": \"<div style=\\\"font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #28a745; border-radius: 8px; padding: 20px; background-color: #f0fff5; margin-top: 10px;\\\"><h2 style=\\\"color: #218838; margin-bottom: 15px;\\\">✅ Customer Processing Success</h2><p style=\\\"font-size: 16px; color: #333; margin-bottom: 20px;\\\">Dear Team,</p><p style=\\\"font-size: 16px; color: #333; margin-bottom: 20px;\\\">We are pleased to inform you that all customer entries in the uploaded Excel file have been successfully processed without any errors.</p><p style=\\\"font-size: 14px; color: #555; margin-bottom: 10px;\\\"><strong>File Name:</strong> {{ $('Google Drive Trigger').first().json.originalFilename }}</p><p style=\\\"font-size: 14px; color: #555; margin-bottom: 20px;\\\"><strong>File Link:</strong> <a href=\\\"{{ $('Google Drive Trigger').first().json.webViewLink }}\\\" style=\\\"color: #218838; text-decoration: none;\\\">View File</a></p><div style=\\\"background-color: #e6ffed; border: 1px solid #c3e6cb; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin: 0; color: #155724; font-size: 14px;\\\"><strong>🎉 Everything went smoothly!</strong> Your data has been validated and integrated into the system.</p></div><div style=\\\"background-color: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin-bottom: 10px;\\\">Best regards,</p><p><strong>Maharati Mind System</strong><br>www.maharatimind.com</p></div><p style=\\\"margin-top: 30px; font-size: 13px; color: #888; text-align: center;\\\">This is an automated confirmation from the Maharati Mind processing system.</p></div>\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2500,
+        -820
+      ],
+      "id": "af0b9296-5800-416b-906d-987205f40527",
+      "name": "System Notification - Successfully",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wZddnI5hbGPbc9K4",
+          "name": "Resend Authorization"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "if($('Customers with Processing Failures').isExecuted && $('Customers with Processing Failures').first().json.list_customer_code.length > 1){\n  return [{\n    fail:true\n  }]\n}\n\n return [{\n    fail:false\n  }]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -680
+      ],
+      "id": "90a3d031-c0de-4608-8795-dbd485dbac19",
+      "name": "Check Customer Fail"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://bbxozfkrbqodlucocfsr.supabase.co/rest/v1/embedded_customer?on_conflict=code",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieG96ZmtyYnFvZGx1Y29jZnNyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTk4MDcxOCwiZXhwIjoyMDY3NTU2NzE4fQ.PRBHYu2ZiPNXcjCnouVSy6XkyH_bD2cATMoJdayZImo"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieG96ZmtyYnFvZGx1Y29jZnNyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTk4MDcxOCwiZXhwIjoyMDY3NTU2NzE4fQ.PRBHYu2ZiPNXcjCnouVSy6XkyH_bD2cATMoJdayZImo"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "resolution=merge-duplicates"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"code\": \"{{$('Loop Over Customers').first().json.Code}}\",\n  \"embedded_data\": \"[{{ $('OpenAI embedding endpoint').first().json.data[0].embedding }}]\",\n  \"pdf_name\": \"{{ $('Download PDF').item.binary.data.fileName }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5860,
+        -1100
+      ],
+      "id": "31968d3b-1654-484c-b0ac-5b15dfed7075",
+      "name": "Upset Supabase",
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download  Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check  File Extension": {
+      "main": [
+        [
+          {
+            "node": "Extract from Excel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif Client The Prossecing file fail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Extracted Data Length": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Customers",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif Client The Prossecing file fail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5 Second": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customers with Processing Failures": {
+      "main": [
+        [
+          {
+            "node": "Wait 5 Second",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download  Excel": {
+      "main": [
+        [
+          {
+            "node": "Check  File Extension",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notif Client The Prossecing file fail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Model Gemini - Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Simulate the Gemini API response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customers with Processing Failures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Data Exist": {
+      "main": [
+        [
+          {
+            "node": "Download PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customers with Processing Failures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from Base64": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Model Gemini - Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from Excel": {
+      "main": [
+        [
+          {
+            "node": "Check Extracted Data Length",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI embedding endpoint": {
+      "main": [
+        [
+          {
+            "node": "Upset Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customers with Processing Failures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulate the Gemini API response": {
+      "main": [
+        [
+          {
+            "node": "OpenAI embedding endpoint",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customers with Processing Failures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Customers": {
+      "main": [
+        [
+          {
+            "node": "Check Customer Fail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Data Exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check File Extension": {
+      "main": [
+        [
+          {
+            "node": "Extract from Base64",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customers with Processing Failures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Some Customer Fail To Precessing": {
+      "main": [
+        [
+          {
+            "node": "Create Excel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "System Notification - Successfully",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download PDF": {
+      "main": [
+        [
+          {
+            "node": "Check File Extension",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customers with Processing Failures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "System Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Excel": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Customer Fail": {
+      "main": [
+        [
+          {
+            "node": "Check Some Customer Fail To Precessing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upset Supabase": {
+      "main": [
+        [
+          {
+            "node": "Wait 5 Second",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customers with Processing Failures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9b6d69b2-e451-48a3-8bc7-de3a59cd4b2c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26789e5062454142cf2f79aedae00f5e320e7af700d4261f9eb8c6bf55293821"
+  },
+  "id": "Kzol1lyf6Y3QWmpp",
+  "tags": []
+}
