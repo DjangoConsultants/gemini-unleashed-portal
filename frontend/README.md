@@ -1,19 +1,22 @@
+# 📦 Dashboard Frontend Application
+
 ## 📋 Overview
-This directory contains the frontend application for the dashboard system that handles and displays logs in real-time.
- 
+This directory contains the frontend application for a dashboard system designed to handle and display logs in real-time, providing a user-friendly interface for log visualization and management.
+
 ## 🎯 Purpose
-- Dashboard Interface: Provides a user-friendly web interface for log visualization
-- Real-time Log Display: Shows logs as they are generated and processed
-- Log Filtering: Allows users to filter logs by date, status, stage...etc
-- Download Functionality: Enables users to download filtered logs in various formats
+The dashboard serves the following purposes:
+- **Dashboard Interface**: Provides a user-friendly web interface for visualizing logs.
+- **Real-time Log Display**: Displays logs as they are generated and processed.
+- **Log Filtering**: Allows users to filter logs by date, status, stage, and other criteria.
+- **Download Functionality**: Enables users to download filtered logs in various formats.
 
 ## ✨ Features
-📊 Interactive dashboard with charts and graphs
-🔍 Advanced search and filtering capabilities
-📥 Log download in PDF formats
-🔄 Real-time log streaming and updates
-📱 Responsive design for mobile and desktop
-🎨 Modern UI with dark/light theme support
+- 📊 **Interactive Dashboard**: Includes charts and graphs for intuitive log visualization.
+- 🔍 **Advanced Search and Filtering**: Supports filtering logs by multiple criteria (e.g., date, status, stage).
+- 📥 **Log Download**: Allows downloading logs in PDF format.
+- 🔄 **Real-time Streaming**: Updates logs in real-time as they are processed.
+- 📱 **Responsive Design**: Optimized for both mobile and desktop devices.
+- 🎨 **Modern UI**: Features a clean interface with dark/light theme support.
 
 ## 🚀 Setup and Installation
 ### Clone the repository
@@ -24,12 +27,12 @@ bash: cd frontend
 
 ### Install dependencies
 bash: npm install
-# or
+or
 yarn install
 
 ### Start the development server
 bash: npm start
-# or
+or
 yarn start
 
 Open your browser and navigate to http://localhost:8080
