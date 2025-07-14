@@ -1,0 +1,1931 @@
+{
+  "name": "Alex | Holloway Group AI Automation | Gemini + Unleashed",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "hasAttachments": false,
+          "foldersToExclude": [
+            "AQMkADAwATM3ZmYBLTlhZGYtYzVmZgAtMDACLTAwCgAuAAADK1bLD6bJHUK8Le2MeLAalwEAz7z9SO0DNEiM_TvryMBrCAAAAgEKAAAA",
+            "AQMkADAwATM3ZmYBLTlhZGYtYzVmZgAtMDACLTAwCgAuAAADK1bLD6bJHUK8Le2MeLAalwEAz7z9SO0DNEiM_TvryMBrCAAAAgEPAAAA",
+            "AQMkADAwATM3ZmYBLTlhZGYtYzVmZgAtMDACLTAwCgAuAAADK1bLD6bJHUK8Le2MeLAalwEAz7z9SO0DNEiM_TvryMBrCAAAAgETAAAA",
+            "AQMkADAwATM3ZmYBLTlhZGYtYzVmZgAtMDACLTAwCgAuAAADK1bLD6bJHUK8Le2MeLAalwEAz7z9SO0DNEiM_TvryMBrCAAAAgEJAAAA",
+            "AQMkADAwATM3ZmYBLTlhZGYtYzVmZgAtMDACLTAwCgAuAAADK1bLD6bJHUK8Le2MeLAalwEAz7z9SO0DNEiM_TvryMBrCAAAAgEUAAAA",
+            "AQMkADAwATM3ZmYBLTlhZGYtYzVmZgAtMDACLTAwCgAuAAADK1bLD6bJHUK8Le2MeLAalwEAz7z9SO0DNEiM_TvryMBrCAAAAgELAAAA",
+            "AQMkADAwATM3ZmYBLTlhZGYtYzVmZgAtMDACLTAwCgAuAAADK1bLD6bJHUK8Le2MeLAalwEAz7z9SO0DNEiM_TvryMBrCAAAAgEgAAAA"
+          ],
+          "foldersToInclude": [
+            "AQMkADAwATM3ZmYBLTlhZGYtYzVmZgAtMDACLTAwCgAuAAADK1bLD6bJHUK8Le2MeLAalwEAz7z9SO0DNEiM_TvryMBrCAAAAgEMAAAA"
+          ]
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.microsoftOutlookTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        -660
+      ],
+      "id": "0a9fd4e6-ad51-4ed7-8dfc-2fe87378845d",
+      "name": "Microsoft Outlook Trigger",
+      "notesInFlow": false,
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "lMxrZlTvZoHpfop2",
+          "name": "Microsoft Outlook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Microsoft Outlook Trigger Workflow",
+        "height": 1500,
+        "width": 10140,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1380,
+        -920
+      ],
+      "typeVersion": 1,
+      "id": "dc5fb179-f7d1-4b27-b197-c2e23c19bfd1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code Node - Parse JSON from LLM Response\n// This handles responses that contain JSON wrapped in markdown code blocks\nconst inputData = $input.all();\nlet results = [];\nlet logs =  [];\n\nlet data = null;\nlet shouldStop  = false;\nfor (let i = 0; i < inputData.length; i++) {\n  const item = inputData[i];\n  \n  // Get the LLM response text (adjust the path based on your LLM node output)\n  let responseText = item.json.response || item.json.text || item.json.content || item.json.output;\n  \n  // If the response is nested deeper, try common paths\n  if (!responseText && item.json.choices && item.json.choices[0]) {\n    responseText = item.json.choices[0].message?.content || item.json.choices[0].text;\n  }\n  \n  // Handle Gemini API response structure\n  if (!responseText && item.json.candidates && item.json.candidates[0]) {\n    responseText = item.json.candidates[0].content?.parts?.[0]?.text;\n  }\n  \n  if (!responseText) {\n    // Fallback: try to find any string value that looks like JSON\n    const jsonString = JSON.stringify(item.json);\n    const jsonMatch = jsonString.match(/```json\\n([\\s\\S]*?)\\n```/);\n    if (jsonMatch) {\n      responseText = jsonMatch[1];\n    } else {\n     shouldStop= true;\n        logs.push('Something went wrong while parsing the AI response to add data to       Unleashed Software.');\n        results.push({\n      json: {\n        order_data : null,\n        logs,\n        from_email :$('Loop Emails').first().json.from,\n        email_id: $('Loop Emails').first().json.conversationId,\n        _processing_timestamp: new Date().toISOString(),\n        file_name:$('Loop Attachments').first().binary.data.fileName,\n        stage:\"parse_json_ai_response\",\n        status:\"error\",\n        purchase_order_guid:null,\n        purchase_created: false,\n        purchase_supabase_id:null,\n        order_status:null\n      }\n    });\n      \n    }\n  }\n  \n  if(!shouldStop){\n     try {\n    // Extract JSON from markdown code blocks\n    let jsonString = responseText;\n    // Remove markdown code block formatting if present\n    const codeBlockMatch = responseText.match(/```json\\n([\\s\\S]*?)\\n```/);\n    if (codeBlockMatch) {\n      jsonString = codeBlockMatch[1];\n    } else {\n      // Try to find JSON without code blocks\n      const jsonMatch = responseText.match(/\\{[\\s\\S]*\\}/);\n      if (jsonMatch) {\n        jsonString = jsonMatch[0];\n      }\n    }\n    \n    // Clean up the JSON string\n    jsonString = jsonString.trim();\n    \n    // Parse the JSON\n    const parsedJson = JSON.parse(jsonString);\n  \n    /*********************** Harde Code *********************/\n    parsedJson.Customer.CustomerCode=\"123\";\n    // const taxRate = parsedJson?.TaxRate ??  0.10;\n      const taxRate =  0.10;\n    /********************************************************/\n    if(parsedJson.errors.length){\n      logs = parsedJson.errors;\n    }\n       \n    if(!parsedJson?.OrderStatus){\n       parsedJson.OrderStatus = 'Parked';\n    }\n     \n    // Validate and process SalesOrderLines\n    if(Array.isArray(parsedJson?.SalesOrderLines)){\n        parsedJson.SalesOrderLines.forEach((line) => {\n     if (!line?.LineTotal || line?.LineTotal <= 0) {\n      line.LineTotal = line.OrderQuantity * line.UnitPrice;\n      // Assuming 'line.productCode' exists\n      logs.push(`LineTotal for product ${line.Product.ProductCode}: Manually calculated, not found.`); \n    }\n\n\n    if (!line?.LineTax || line?.LineTax <=  0) {\n     \n      line.LineTax = parseFloat((line.LineTotal * taxRate).toFixed(2));\n      // Assuming 'line.productCode' exists\n      logs.push(`LineTax for product ${line.Product.ProductCode}: Manually calculated, not found.`);\n    }\n          });\n        }\n                 \n   if (!parsedJson?.SubTotal || parsedJson?.SubTotal == 0) {\n      parsedJson.SubTotal = parseFloat(parsedJson.SalesOrderLines.reduce((sum, line) => sum + line.LineTotal, 0).toFixed(2));\n      logs.push(\"SubTotal: Manually calculated, not found.\");\n  }\n\n  if (!parsedJson?.TaxTotal || parsedJson?.TaxTotal <=  0) {\n    parsedJson.TaxTotal = parseFloat(parsedJson.SalesOrderLines.reduce((sum, line) => sum + line.LineTax, 0).toFixed(2));\n    logs.push(\"TaxTotal: Manually calculated, not found.\");\n  }\n\n  if (!parsedJson?.Total || parsedJson?.Total <=  0) {\n    parsedJson.Total = parseFloat((parsedJson.SubTotal + parsedJson.TaxTotal).toFixed(2));\n    logs.push(\"Total: Manually calculated, not found.\");\n  }\n\n    delete  parsedJson.errors;\n    parsedJson.OrderNumber = Math.floor(10000 + Math.random() * 90000).toString();\n    data = parsedJson;\n    // Return the parsed JSON object\n    results.push({\n      json: {\n        order_data : parsedJson,\n        logs,\n        from_email :$('Loop Emails').first().json.from,\n        email_id: $('Loop Emails').first().json.conversationId,\n        _processing_timestamp: new Date().toISOString(),\n        file_name:$('Loop Attachments').first().binary.data.fileName,\n        stage:\"parse_json_ai_response\",\n        status:\"success\",\n        purchase_order_guid:null,\n        purchase_created: false,\n        purchase_supabase_id:null,\n        order_status:null\n      }\n   \n    });\n    \n  } catch (error) {\n    // If JSON parsing fails, return error information\n    logs.push('Something went wrong while parsing the AI response to add data to Unleashed Software.');\n    results.push({ json: { \n       order_data : data,\n       logs,\n      _processing_timestamp:new Date().toISOString(),\n      from_email: $('Loop Emails').first().json.from,\n      email_id: $('Loop Emails').first().json.conversationId,\n      file_name:$('Loop Attachments').first().binary.data.fileName,\n      stage:\"parse_json_ai_response\",\n      status:\"error\",\n      purchase_order_guid:null,\n      purchase_created: false,\n      purchase_supabase_id:null,\n      order_status:null\n      } \n      });\n  }\n  }\n \n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2040,
+        -860
+      ],
+      "id": "fb34cf87-2f61-4772-97e0-885a40a74732",
+      "name": "Refactor unleashed payload",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        840,
+        -900
+      ],
+      "id": "7923d734-a3a6-4d1d-a00d-40e63a74017e",
+      "name": "Wait 5 second-1",
+      "webhookId": "e27252ff-7cc8-4b3f-a862-ef91eaa28bb6"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        8560,
+        260
+      ],
+      "id": "0c81053f-e0c1-4f58-9be7-f39035f30c79",
+      "name": "Wait 5 second-2",
+      "webhookId": "418caf66-e264-4071-8442-952a52851f83"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -680,
+        -660
+      ],
+      "id": "8bcefcc6-fe3b-46ab-a8d3-a98d3755ba19",
+      "name": "Loop Emails"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -20,
+        -280
+      ],
+      "id": "41930220-299a-4185-9cdb-0432147b890f",
+      "name": "Loop Attachments",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "=data",
+        "destinationKey": "base64_file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        800,
+        -1480
+      ],
+      "id": "7ee3dd4b-7162-4264-ae9a-34a96d1ab7e9",
+      "name": "Extract from File",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyA_DnmG2BkL6CUT-cd9F-wfS8CrTDQaRVc"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Role\\nYou are an advanced document parsing AI tasked with extracting data from diverse PDF Sales Orders (SOs), including typed and scanned handwritten documents, and converting them into structured JSON for the Unleashed REST API’s SalesOrders endpoint. The SOs come from different customers with varying layouts and no predefined templates. Your goal is to ensure ≥99% field-level accuracy, handle multi-page SOs, detect invalid or duplicate documents, and flag errors for logging without making any API calls. Do not perform any calculations; only extract data exactly as it appears in the PDF, except for generating LineNumber as described below. Clearly warn the user about any missing or unextractable fields in the errors array, including ProductCode and description (if available) for line item fields, to ensure they know which fields need manual attention (e.g., for calculation or correction in a separate process like n8n).\\n\\nInput Layer\\nInput\\nA PDF file (typed or scanned handwritten, scanned at ≥200 dpi) representing a sales order. The document may vary in structure, format, and legibility.\\n\\nAction Layer\\nOutput\\nA JSON object matching the Unleashed SalesOrders API format, following this schema:\\n\\nPDF Field\\tJSON Field\\tNotes\\nSO Number\\tOrderNumber\\tMandatory; set to null if not found, include warning\\nCustomer Code\\tCustomer.CustomerCode\\tMandatory; set to null if not found, include warning\\nOrder Date\\tOrderDate\\tMandatory; set to null if not found, include warning; Format: YYYY-MM-DD\\nRequired Date\\tRequiredDate\\tOptional; set to null if not found, include warning\\nCurrency\\tCurrency.CurrencyCode\\tAlways set to \\\"AUD\\\"\\nOrder Status\\tOrderStatus\\tAlways set to \\\"Parked\\\"; no warning if not found\\nTax Rate\\tTaxRate\\tExtract only if present; set to 0.00 if not found, include warning\\nSKU (Line Items)\\tSalesOrderLines[].Product.ProductCode\\tMandatory; set to null if not found, include warning\\nQuantity\\tSalesOrderLines[].OrderQuantity\\tMandatory; set to null if not found, include warning; Decimal\\nUnit Price\\tSalesOrderLines[].UnitPrice\\tMandatory; set to null if not found, include warning; Decimal, excludes GST\\nLine Total\\tSalesOrderLines[].LineTotal\\tExtract only if present; set to 0.00 if not found, include warning with ProductCode and description (if available)\\nLine Tax\\tSalesOrderLines[].LineTax\\tExtract only if present; set to 0.00 if not found, include warning with ProductCode and description (if available)\\nLine Number\\tSalesOrderLines[].LineNumber\\tGenerated incrementally starting from 1; not extracted from PDF\\nSubTotal\\tSubTotal\\tExtract only if present; set to 0.00 if not found, include warning\\nTaxTotal\\tTaxTotal\\tExtract only if present; set to 0.00 if not found, include warning\\nTotal\\tTotal\\tExtract only if present; set to 0.00 if not found, include warning\\n\\nSample Output Structure\\njson\\n{\\n  \\\"SalesOrderLines\\\": [\\n    {\\n      \\\"LineNumber\\\": 1,\\n      \\\"Product\\\": {\\n        \\\"ProductCode\\\": \\\"FD11\\\"\\n      },\\n      \\\"OrderQuantity\\\": 10000,\\n      \\\"UnitPrice\\\": 0.3,\\n      \\\"LineTotal\\\": 3000,\\n      \\\"LineTax\\\": 300\\n    },\\n    {\\n      \\\"LineNumber\\\": 2,\\n      \\\"Product\\\": {\\n        \\\"ProductCode\\\": \\\"FD12\\\"\\n      },\\n      \\\"OrderQuantity\\\": 5000,\\n      \\\"UnitPrice\\\": 0.5,\\n      \\\"LineTotal\\\": 2500,\\n      \\\"LineTax\\\": 250\\n    }\\n  ],\\n  \\\"OrderNumber\\\": \\\"SO-139\\\",\\n  \\\"OrderDate\\\": \\\"2019-08-05\\\",\\n  \\\"RequiredDate\\\": \\\"2019-08-05\\\",\\n  \\\"OrderStatus\\\": \\\"Parked\\\",\\n  \\\"Customer\\\": {\\n    \\\"CustomerCode\\\": \\\"123\\\"\\n  },\\n  \\\"Currency\\\": {\\n    \\\"CurrencyCode\\\": \\\"AUD\\\"\\n  },\\n  \\\"TaxRate\\\": 0.1,\\n  \\\"SubTotal\\\": 5500,\\n  \\\"TaxTotal\\\": 550,\\n  \\\"Total\\\": 6050,\\n  \\\"errors\\\": [\\n    \\\"Field 'RequiredDate' not found or unextractable in the file. Please review.\\\",\\n    \\\"Field 'LineTotal' not found or unextractable for ProductCode 'FD12' (Description: null) in the file. Value set to 0 for manual calculation.\\\",\\n    \\\"Field 'LineTax' not found or unextractable for ProductCode 'FD12' (Description: null) in the file. Value set to 0 for manual calculation.\\\",\\n    \\\"Field 'SubTotal' not found or unextractable in the file. Value set to 0 for manual calculation.\\\",\\n    \\\"Field 'TaxTotal' not found or unextractable in the file. Value set to 0 for manual calculation.\\\",\\n    \\\"Field 'Total' not found or unextractable in the file. Value set to 0 for manual calculation.\\\"\\n  ]\\n}\\n\\nRules & Validation\\nAll mandatory fields must be extracted. If missing or unextractable, set to null and add a warning in errors.\\n\\nFor duplicate or invalid documents, return {} and include an appropriate warning.\\n\\nIf any value is uncertain or unclear, still include it but add a user-friendly warning for verification.\\n\\nAlways set Currency.CurrencyCode to \\\"AUD\\\" and OrderStatus to \\\"Parked\\\" (no warnings needed).\\n\\nFor SalesOrderLines, assign incremental LineNumber starting from 1.\\n\\nFor LineTotal, LineTax, SubTotal, TaxTotal, Total, and TaxRate, extract only if present; if not, set to 0.00 and warn.\\n\\nDo not perform any calculations. Extract values exactly as they appear in the PDF except for generating LineNumber.\\n\\nRound all currency values to two decimal places when extracted.\\n\\nExample Clarification\\nIf the PDF contains only one line item, the output should include one line. If it contains multiple line items, generate each with its LineNumber incremented accordingly.\\n\\nFinal Notes\\nEnsure the output JSON is clean, valid, and ready to be passed to the Unleashed SalesOrders API.\\n\\nDo not make any API calls.\"\n        },\n        {\n          \"inlineData\": {\n            \"mimeType\": \"{{ $('Loop Attachments').item.binary.data.mimeType }}\",\n            \"data\": \"{{ $('Loop Attachments').item.binary.data.data }}\"\n          }\n        }\n      ]\n    }\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        -840
+      ],
+      "id": "ca1d978f-e6fb-4331-a0bd-b914d51f2232",
+      "name": "HTTP Request - Model Gemini",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.unleashedsoftware.com/SalesOrders",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "api-auth-id",
+              "value": "3c3a2d5e-9897-432c-9d6d-b3cf144ad2b6"
+            },
+            {
+              "name": "client-type",
+              "value": "sammy-dc"
+            },
+            {
+              "name": "api-auth-signature",
+              "value": "=b1RNEh7LgGAF4Zz/gXi1HwJKmTw2J01dPWK3U0jjGwg="
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.order_data  }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2920,
+        -660
+      ],
+      "id": "43afbe8e-bd3e-4077-9604-18127cde69d4",
+      "name": "Post Unleashed Software",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawMessage = $input.item.json.error?.message || '';\nlet errors = [];\n\ntry {\n  // Step 1: Remove HTTP status prefix like \"400 - \"\n  let jsonPart = rawMessage.replace(/^\\d+ - /, '').trim();\n\n  // Step 2: Remove outer quotes if present\n  if (jsonPart.startsWith('\"') && jsonPart.endsWith('\"')) {\n    jsonPart = jsonPart.slice(1, -1);\n  }\n\n  // Step 3: Clean escape characters\n  jsonPart = jsonPart\n    .replace(/\\\\\"/g, '\"')            // Escaped quotes\n    .replace(/\\\\n/g, '')             // Newlines\n    .replace(/\\\\u0027/g, \"'\")        // Unicode apostrophe\n    .replace(/\\\\u0022/g, '\"')        // Unicode quote\n    .replace(/\\\\u([0-9a-fA-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)))\n    .replace(/\\\\\\\\/g, '\\\\')          // Fix double backslashes\n    .replace(/\\\\([^u])/g, '$1')      // Remove stray backslashes\n    .trim();\n\n  // Debug print if needed\n  // console.log('Cleaned JSON string:', jsonPart);\n\n  // Step 4: Try parsing the JSON string\n  const parsed = JSON.parse(jsonPart);\n\n  // Step 5: Handle known error formats\n\n  // Case: Array of Items with error details\n  if (Array.isArray(parsed.Items)) {\n    parsed.Items.forEach(item => {\n      errors.push({\n        field: item.Field || null,\n        message: item.Description || 'Unknown error',\n        code: item.ErrorCode ?? null\n      });\n    });\n  }\n\n  // Case: Flat single error with Description\n  else if (parsed.Description) {\n    errors.push({\n      field: null,\n      message: parsed.Description,\n      code: parsed.ErrorCode ?? null\n    });\n  }\n\n  // Case: Fallback — try to extract string properties\n  else {\n    const extracted = Object.entries(parsed).filter(([_, v]) => typeof v === 'string');\n    if (extracted.length) {\n      extracted.forEach(([key, val]) => {\n        errors.push({\n          field: key,\n          message: val,\n          code: null\n        });\n      });\n    } else {\n      errors.push({\n        field: null,\n        message: 'Unrecognized error structure',\n        code: null\n      });\n    }\n  }\n\n} catch (err) {\n  errors.push({\n    field: null,\n    message: 'Failed to parse error message: ' + err.message,\n    code: null\n  });\n}\n\n// Final output as array of n8n-style JSON items\nreturn errors.map(error => ({ json: error }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3220,
+        -500
+      ],
+      "id": "f25c274b-40e7-4467-9c8c-e65b15753791",
+      "name": "Parse Error Unleashed Software",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code Node - Create simple array of binary attachments for Loop Node\nconst item = $('Loop Emails').first();\nconst results = [];\ntry {\n  if (item.binary && Object.keys(item.binary).length > 0) {\n  // Create one item per attachment\n  for (const key of Object.keys(item.binary)) {\n    results.push({\n      json: {},\n      binary: {\n        data: item.binary[key]\n      }\n      \n    });\n  }\n}else{\n  throw new Error(\"Failed to process email attachments\")\n}\n} catch (error) {\n  throw new Error(\"Failed to process email attachments\");\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -380
+      ],
+      "id": "e4e641bd-68b9-40c4-85c8-54265326ed43",
+      "name": "Create Attachments Array",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results =[]\nresults.push({\n      json: {\n         from :$('Loop Emails').first().json.from,\n         logs:[],\n        _processingTimestamp: new Date().toISOString(),\n        stage:\"processing\",\n        status:'process',\n        fileName:null\n      }\n    });\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        -1620
+      ],
+      "id": "d07b8c86-da71-4e53-948c-dc4978a97f88",
+      "name": "Payload Logs"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get existing logs from the Refactor node\nconst baseLogs = $('Refactor unleashed payload').first().json.logs || [];\nconst resutls= [];\n// Extract only message strings from the current node input\n if($input.all().length) {\n   $input.all().forEach(element =>{\n     if(element.json.message){\n           baseLogs.push(element.json.message)\n     }\n   })\n  }\ntry {\n \n  baseLogs.push(\"Failed to create Purchase Order in Unleashed Software.\");\n// Merge and return\n  resutls.push (\n   {\n    json: {\n       logs: baseLogs,\n      _processing_timestamp:new Date().toISOString(),\n      from_email: $('Loop Emails').first().json.from,\n      email_id: $('Loop Emails').first().json.conversationId,\n      file_name:$('Loop Attachments').first().binary.data.fileName,\n      stage:\"unleashed_sync\",\n      status:\"error\",\n      purchase_order_guid:null,\n      purchase_created: false,\n      purchase_supabase_id:null,\n      order_status:null\n    }\n  }\n)\n} catch (error) {\nbaseLogs.push(\"Failed to create Purchase Order in Unleashed Software (\" + error.message + \")\");\n  return [\n     {\n    json: {\n       logs: baseLogs,\n      _processing_timestamp:new Date().toISOString(),\n      from_email: $('Loop Emails').first().json.from,\n      email_id: $('Loop Emails').first().json.conversationId,\n      file_name:$('Loop Attachments').first().binary.data.fileName,\n      stage:\"unleashed_sync\",\n      status:\"error\",\n      purchase_order_guid:null,\n      purchase_created: false,\n      purchase_supabase_id:null,\n      order_status:null\n    }\n  }\n  ]\n}\n\nreturn resutls;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3560,
+        -380
+      ],
+      "id": "040640dc-9a21-442d-8619-3b6469f9a321",
+      "name": "Logs Unleashed Software",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the message string from the input\nconst message = $input.first().json.error.message || '';\nlet logs =  [];\n// Check if the message is empty\nif (!message) {\n  return [{ json: { errorMessage: \"No error message provided\" } }];\n}\n\n// Clean the message string: remove status code prefix, extra quotes, and literal \"\\n\"\nlet cleanedMessage = message\n  .replace(/^\\d+ - /, '')          // Remove \"400 - \" or similar prefix\n  .replace(/^\"/, '')               // Remove leading quote if present\n  .replace(/\"$/, '')               // Remove trailing quote if present\n  .replace(/\\\\n/g, '')             // Remove literal \"\\n\" characters\n  .replace(/\\\\\"/g, '\"')            // Replace escaped quotes with regular quotes\n  .trim();                         // Remove leading/trailing whitespace\n\n// Log the cleaned message for debugging\nconsole.log('Cleaned message:', cleanedMessage);\n\ntry {\n  // Parse the cleaned JSON string\n  const parsed = JSON.parse(cleanedMessage);\n  // Check if the parsed object has the expected structure\n  if (parsed && parsed.error && parsed.error.message) {\n    const errorMessage = \"Gemini :\" + parsed.error.message;\n    logs.push(\"Something went wrong while parsing the AI response to extract data from the PDF (\" + errorMessage + \")\");\n  } else {\n    logs.push(\"Something went wrong while parsing the AI response to extract data from the      PDF\");\n  }\n  return [{ json: { \n       logs,\n      _processing_timestamp:new Date().toISOString(),\n      from_email: $('Loop Emails').first().json.from,\n      email_id:$('Loop Emails').first().json.conversationId,\n      file_name:$('Loop Attachments').first().binary.data.fileName,\n      stage:\"ai_parsing\",\n      status:\"error\",\n      purchase_order_guid:null,\n      purchase_created: false,\n      purchase_supabase_id:null,\n      order_status:null\n      } }];\n} catch (error) {\nlogs.push(\"Something went wrong while parsing the AI response to extract data from the PDF (\" + error.message + \")\");\n     return [{ json: { \n       logs,\n      _processing_timestamp:new Date().toISOString(),\n      from_email: $('Loop Emails').first().json.from,\n      email_id: $('Loop Emails').first().json.conversationId,\n      file_name:$('Loop Attachments').first().binary.data.fileName,\n      stage:\"ai_parsing\",\n      status:\"error\",\n      purchase_order_guid:null,\n      purchase_created: false,\n      purchase_supabase_id:null,\n      order_status:null\n      } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2140,
+        -300
+      ],
+      "id": "9012fbad-5cfa-4e0c-a1c7-260f7fc72148",
+      "name": "Logs Gemini",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Loop Attachments').item.binary.data.fileType }}",
+                    "rightValue": "excel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    },
+                    "id": "6ff6ed68-037a-455a-8b72-f39cef1aac47"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "90afd1b3-3af1-4271-9e0f-8c058d58471e",
+                    "leftValue": "={{ $('Loop Attachments').item.binary.data.fileType }}",
+                    "rightValue": "pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notRegex"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NOT PDF"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1580,
+        -1420
+      ],
+      "id": "f7e7b2cd-57e9-4df1-afd5-b6e464e4a7f5",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "let logs = [];\nlogs.push(\"The file is not a PDF, so it cannot be processed.\");\nreturn [{ json: { \n       logs,\n      _processing_timestamp: new Date().toISOString(),\n      from_email: $('Loop Emails').first().json.from,\n      email_id:$('Loop Emails').first().json.conversationId,\n      file_name:$('Loop Attachments').first().binary.data.fileName,\n      stage:\"processing_attachments\",\n      status:\"info\",\n      purchase_order_guid:null,\n      purchase_created: false,\n      purchase_supabase_id:null,\n      order_status:null\n      } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        100
+      ],
+      "id": "94148093-023d-48d9-a91f-c9d52cdec649",
+      "name": "Logs Nor PDF",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results =[];\n\nresults.push({\n      json: {\n        from_email :$input.first().json.from,\n        email_id:$input.first().json.conversationId,\n        logs:['No emails found in Loop Emails node'],\n        _processing_timestamp: new Date().toISOString(),\n        stage:\"processing_email\",\n        status:'error',\n        file_name:null,\n        purchase_order_guid: null,\n        purchase_created: false,\n        purchase_supabase_id:null\n      }\n    });\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2920,
+        -1480
+      ],
+      "id": "48d42c01-4e7e-46ce-8f5b-54bc963cad20",
+      "name": "Logs Loop Emails",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results =[]\nlet logs =  [];\nlogs.push('Failed to process email attachments');\nresults.push({\n      json: {\n        from_email :$('Loop Emails').first().json.from,\n        email_id:$('Loop Emails').first().json.conversationId,\n        logs,\n        _processing_timestamp: new Date().toISOString(),\n        stage:\"processing_attachments\",\n        status:'error',\n        file_name:null,\n        purchase_order_guid:null,\n        purchase_created: false,\n        purchase_supabase_id:null,\n        order_status:null\n      }\n    });\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        260
+      ],
+      "id": "8fed1d6e-85fb-4ba8-ab8d-ef9e4f9731cd",
+      "name": "Logs Proccing Attachments",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "let logs = $('Payload Logs').first().json.logs || [];\nlogs.push(\"Failed to convert attachment to base64 for AI processing\");\nreturn [{ \n  json: { \n    logs,\n    _processing_timestamp: new Date().toISOString(),\n    from_email: $('Loop Emails').first().json.from,\n    email_id: $('Loop Emails').first().json.conversationId,\n    file_name: $('Loop Attachments').first().binary.data.fileName,\n    stage: \"processing_Attachments\",\n    status: \"error\",\n    purchase_order_guid:null,\n    purchase_created: false,\n    purchase_supabase_id:null\n  } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        -1440
+      ],
+      "id": "043e1a51-96a7-46ee-aa8b-8cada1f4fb28",
+      "name": "logs Format Attachments",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const baseLogs = $('Refactor unleashed payload').first().json.logs || [];\nbaseLogs.push(\"Purchase order created successfully in Unleashed Software\");\n\nreturn [{ \n  json: { \n    logs:baseLogs,\n    _processing_timestamp: new Date().toISOString(),\n    from_email: $('Loop Emails').first().json.from,\n    email_id: $('Loop Emails').first().json.conversationId,\n    file_name: $('Loop Attachments').first().binary.data.fileName,\n    stage: \"unleashed_sync\",\n    status: \"success\",\n    purchase_order_guid: $input.first().json.Guid,\n    purchase_created: true,\n    purchase_supabase_id:null,\n    order_status:'Parked'\n  } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3640,
+        -680
+      ],
+      "id": "8c9e8b2c-74dc-4740-874b-9416f3155b36",
+      "name": "Logs Unleashed Software1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Logs Unleashed Software\n",
+        "height": 220,
+        "width": 360,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3520,
+        -740
+      ],
+      "typeVersion": 1,
+      "id": "93b6e3d4-d1fc-472d-8646-4cd333889cee",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Logs\n",
+        "height": 220,
+        "width": 280,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2840,
+        -1540
+      ],
+      "typeVersion": 1,
+      "id": "af69f8fc-cd24-4a0c-ac78-09e9deb10a8a",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "58059035-0219-4740-a128-3daaef8986f7",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "fdc3deea-4bf8-4006-8f13-47757ac7bd0d",
+              "leftValue": "={{ $input.first().json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "f72d4da5-16be-4332-8a7d-23e48db7bc8d",
+              "leftValue": "={{ $input.first().json.conversationId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2480,
+        -1560
+      ],
+      "id": "08e17dcd-abe9-4971-86c5-a7b46bd1f640",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "## Logs processing_attachments\n",
+        "height": 220,
+        "width": 380,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -520,
+        200
+      ],
+      "typeVersion": 1,
+      "id": "cea71087-dd91-4f36-8ab2-e6e80cd5d370",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Logs Logs Not PDF\n",
+        "height": 220,
+        "width": 260,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1240,
+        40
+      ],
+      "typeVersion": 1,
+      "id": "7d5429f6-8454-48ac-a0ae-b8fb8b255908",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## Logs\n",
+        "height": 220,
+        "width": 220,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1220,
+        -1500
+      ],
+      "typeVersion": 1,
+      "id": "e031280c-00e9-455d-98f7-620a5d4d43ca",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "## Logs Gemini\n",
+        "height": 220,
+        "width": 220,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2080,
+        -360
+      ],
+      "typeVersion": 1,
+      "id": "9e7c03bc-471e-4029-b28a-d70206106a87",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "## Logs Unleashed Software\n",
+        "height": 240,
+        "width": 320,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3460,
+        -460
+      ],
+      "typeVersion": 1,
+      "id": "f616315b-9495-4000-ac17-007e6bdf77de",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "tableId": "processing_logs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "logs",
+              "fieldValue": "={{ $json.logs }}"
+            },
+            {
+              "fieldId": "_processing_timestamp",
+              "fieldValue": "={{ $json._processing_timestamp }}"
+            },
+            {
+              "fieldId": "from_email",
+              "fieldValue": "={{ $json.from_email }}"
+            },
+            {
+              "fieldId": "email_id",
+              "fieldValue": "={{ $json.email_id }}"
+            },
+            {
+              "fieldId": "file_name",
+              "fieldValue": "={{ $json.file_name || null }}"
+            },
+            {
+              "fieldId": "stage",
+              "fieldValue": "={{ $json.stage }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.status }}"
+            },
+            {
+              "fieldId": "purchase_created",
+              "fieldValue": "={{ $json.purchase_created }}"
+            },
+            {
+              "fieldId": "purchase_supabase_id",
+              "fieldValue": "={{ $json.purchase_supabase_id }}"
+            },
+            {
+              "fieldId": "purchase_order_guid",
+              "fieldValue": "={{ $json.purchase_order_guid }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5580,
+        -160
+      ],
+      "id": "33fc4339-27fe-42f8-b981-a2f2663a2e02",
+      "name": "Post log",
+      "credentials": {
+        "supabaseApi": {
+          "id": "mN1BQbSXt2SIxh5z",
+          "name": "unleashedSoftwareApi"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "useCustomSchema": true,
+        "tableId": "purchase_order",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "order_number",
+              "fieldValue": "={{ $json?.order_number || null }}"
+            },
+            {
+              "fieldId": "company_name",
+              "fieldValue": "={{ $json.company_name || null }}"
+            },
+            {
+              "fieldId": "order_data",
+              "fieldValue": "={{ $json.order_data || null }}"
+            },
+            {
+              "fieldId": "unleashed_created",
+              "fieldValue": "={{ $json['unleashed_created '] || null }}"
+            },
+            {
+              "fieldId": "unleashed_id",
+              "fieldValue": "={{ $json.unleashed_id || null }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4960,
+        -280
+      ],
+      "id": "6f60885a-8475-4ebb-8979-15608b82bd0b",
+      "name": "Post Purchase Order",
+      "credentials": {
+        "supabaseApi": {
+          "id": "mN1BQbSXt2SIxh5z",
+          "name": "unleashedSoftwareApi"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f367d317-8ed2-4484-8729-f35bd573e1a8",
+              "name": "order_number",
+              "value": "={{$json.status == 'error' && $json.stage =='unleashed_sync' ? ( $('Refactor unleashed payload').first().json.order_data.OrderNumber || null) :  ($('Refactor unleashed payload').first().json.order_data.OrderNumber || null) }}",
+              "type": "string"
+            },
+            {
+              "id": "f643bcde-5a37-4b34-999f-8e413d17594e",
+              "name": "company_name",
+              "value": "={{$json.status == 'error' && $json.stage =='unleashed_sync' ? ( $('Refactor unleashed payload').first().json.order_data.Customer.CustomerCode || null) :  ($('Refactor unleashed payload').first().json.order_data.Customer.CustomerCode || null ) }}",
+              "type": "string"
+            },
+            {
+              "id": "5dc91f30-0282-47c3-9747-d7c41bc88b42",
+              "name": "order_data",
+              "value": "={{$json.status == 'error' && $json.stage =='unleashed_sync' ? ( $('Refactor unleashed payload').first().json.order_data || null) :  ($('Refactor unleashed payload').first().json.order_data || null ) }}",
+              "type": "object"
+            },
+            {
+              "id": "1f856f78-d594-4de1-9631-5ad65a4a7d4f",
+              "name": "unleashed_created ",
+              "value": "={{$json.status == 'error' && $json.stage =='unleashed_sync' ? ( $('Refactor unleashed payload').first().json._processing_timestamp || null) :  ($('Refactor unleashed payload').first().json._processing_timestamp || null) }}",
+              "type": "string"
+            },
+            {
+              "id": "371b5cd7-5f99-47c7-b4e6-886003ccb80a",
+              "name": "unleashed_id",
+              "value": "={{ $input.item.json.status == 'success' && $input.item.json.stage =='unleashed_sync' ? $('Post Unleashed Software').first().json.Guid : null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4620,
+        -280
+      ],
+      "id": "39069efe-aba3-43ac-9f93-8d93b40c872e",
+      "name": "Purchase Order Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"Maharati Mind () <noreply@maharatimind.com>\",\n  \"to\": [\n      \"otmanedev5@gmail.com\",\n     \"sammy@djangoconsultants.net\"\n  ],\n  \"subject\": \"🚨 CRITICAL: File Processing Workflow Failure - {{ $('Loop Attachments').first().binary.data.fileName }}\",\n  \"html\": \"<div style=\\\"font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e74c3c; border-radius: 8px; padding: 20px; background-color: #fdf2f2; margin-top: 10px;\\\"><h2 style=\\\"color: #c0392b; margin-bottom: 15px;\\\">⚠️ Critical Workflow Error - File Processing</h2><p style=\\\"font-size: 16px; color: #333; margin-bottom: 20px;\\\">Hi Team,</p><p style=\\\"font-size: 16px; color: #333; margin-bottom: 20px;\\\">We've encountered a critical error in our file processing workflow that requires immediate attention.</p><div style=\\\"background-color: #ffffff; border-left: 4px solid #e74c3c; padding: 15px; margin: 20px 0; border-radius: 4px;\\\"><h3 style=\\\"color: #c0392b; margin: 0 0 15px 0; font-size: 18px;\\\">Error Details:</h3><ul style=\\\"margin: 0; padding-left: 20px; color: #555;\\\"><li style=\\\"margin-bottom: 8px;\\\"><strong>Source Email:</strong> {{ $('Loop Emails').first().json.from }}</li><li style=\\\"margin-bottom: 8px;\\\"><strong>Affected File:</strong> {{ $('Loop Attachments').first().binary.data.fileName }}</li><li style=\\\"margin-bottom: 8px;\\\"><strong>Issue:</strong> File processing workflow failed at critical step</li><li style=\\\"margin-bottom: 8px;\\\"><strong>Impact:</strong> File data not processed, downstream automation affected</li></ul></div><div style=\\\"background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin: 0; color: #856404; font-size: 14px;\\\"><strong>🚨 Immediate Action Required:</strong> Please review the workflow logs immediately and test the file processing step to prevent similar failures. Check file format compatibility and processing rules for files like {{ $('Loop Attachments').first().binary.data.fileName }}.</p></div><div style=\\\"background-color: #e8f5e8; border: 1px solid #c3e6c3; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin: 0; color: #2d5a2d; font-size: 14px;\\\"><strong>🔧 Testing Recommendation:</strong> Before deploying fixes, thoroughly test the workflow with similar file types to ensure this error doesn't occur again.</p></div><div style=\\\"background-color: #ffffff; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin-top: 20px;\\\"><p style=\\\"margin-bottom: 10px;\\\">Best regards,</p><p><strong>Automated Workflow System</strong><br>SunshineCoastLife.com.au</p></div><p style=\\\"margin-top: 30px; font-size: 13px; color: #888; text-align: center;\\\">This critical error notification was sent automatically from the workflow monitoring system.</p></div>\",\n  \"attachments\": [\n    {\n      \"filename\": \"{{ $('Loop Attachments').first().binary.data.fileName }}\",\n      \"content\": \"{{ $('Loop Attachments').first().binary.data.data }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        8020,
+        -240
+      ],
+      "id": "ce97b339-a9aa-43b0-9945-4149d01687ec",
+      "name": "Resend email",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wZddnI5hbGPbc9K4",
+          "name": "Resend Authorization"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nconst data =  $input.all();\nconst dataJson = data.map(item=> item.json);\nconst element = dataJson[0];\n\nconst arrayLogsExecuteBeforeCreatePurchaseOrder =['processing_email','processing_attachments','ai_parsing','parse_json_ai_response','customer_sync'];\n\nif(arrayLogsExecuteBeforeCreatePurchaseOrder.includes(element?.stage)){\n  return data;\n}\n\nif(element?.fail){\n  return $('Logs Unleashed Software').all();\n}\n\nif($('Merge').first()?.json?.stage == 'unleashed_sync'){\n  const mergeData = $('Merge').first().json;\n    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;\n  const isUuid = uuidRegex.test($input.first().json.id);\n  if($input.first().json.id && isUuid){\n   return [{\n      ...mergeData,\n      purchase_supabase_id: $input.first().json.id\n   },\n          ];\n  }\n  return [mergeData];\n}\n\n\n\nreturn []\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5340,
+        240
+      ],
+      "id": "19d48fbf-7c53-4a4b-a6bf-3af2ea99f73a",
+      "name": "Handle Global Payload",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2e576e46-e39b-456d-bea6-ce042f266964",
+              "leftValue": "={{$('Loop Attachments').isExecuted}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1960,
+        -1400
+      ],
+      "id": "4afabe21-a544-472d-b24b-6a62b0788361",
+      "name": "If2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4280,
+        -420
+      ],
+      "id": "db7e9f04-e204-4df2-b2a2-84625754cc60",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://bbxozfkrbqodlucocfsr.supabase.co/storage/v1/object/uploads/{{  $json.log_id+ \".\" + $binary.data.fileName.split('.')[1] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieG96ZmtyYnFvZGx1Y29jZnNyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTk4MDcxOCwiZXhwIjoyMDY3NTU2NzE4fQ.PRBHYu2ZiPNXcjCnouVSy6XkyH_bD2cATMoJdayZImo"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={{ $binary.data.mimeType }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "=data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6740,
+        140
+      ],
+      "id": "8b2c200f-321c-4552-b5b6-393a62bf30f7",
+      "name": "Upload File Supabase",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "height": 420,
+        "width": 2640,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        740,
+        -1660
+      ],
+      "typeVersion": 1,
+      "id": "2f4010e0-c63b-428c-b06d-e36b4046cc39",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    ...{\n      json: {\n        log_id:$input.first().json.id,\n      },\n      binary: $('Loop Attachments').first().binary\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6180,
+        -40
+      ],
+      "id": "5eb40735-7f62-4f67-88df-7e19494a1153",
+      "name": "Binary Data"
+    },
+    {
+      "parameters": {
+        "tableId": "purchase_file",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "processing_logs_id",
+              "fieldValue": "={{ $('Post log').item.json.id }}"
+            },
+            {
+              "fieldId": "file_name",
+              "fieldValue": "={{ $json.Key.split('/')[1] }}"
+            },
+            {
+              "fieldId": "file_path",
+              "fieldValue": "={{ $json.Key }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        7340,
+        240
+      ],
+      "id": "85b5d9fb-e9b0-4d8f-864a-83377c3d207d",
+      "name": "Post File",
+      "credentials": {
+        "supabaseApi": {
+          "id": "mN1BQbSXt2SIxh5z",
+          "name": "unleashedSoftwareApi"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2e576e46-e39b-456d-bea6-ce042f266964",
+              "leftValue": "={{$('Loop Attachments').isExecuted}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        5900,
+        -20
+      ],
+      "id": "93c9f00e-7627-4400-9e62-7d9b5d271ae0",
+      "name": "If5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "60e92147-31cb-4c0b-ab6e-f897bda46736",
+              "leftValue": "={{ $('Loop Attachments').item.binary.data.fileType }}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        60,
+        80
+      ],
+      "id": "e6dbbaae-4f05-467a-a835-eccf5d5d21dd",
+      "name": "If6"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyA_DnmG2BkL6CUT-cd9F-wfS8CrTDQaRVc"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"Extract the following information from the provided PDF document with high accuracy. Focus on identifying details related to the company that sent the PDF. Return the results in a structured JSON format under a key called 'companies'. Each company should be listed as a separate object within the 'companies' array, with clear labels for each category. Only include information that is explicitly found in the PDF. Do not include placeholders like 'Not found' or 'N/A' for missing data. Prioritize the following:\\n\\nCompany Address: Any physical or mailing address associated with the company (e.g., street, city, state, country, postal code).\\nEmail Addresses: Any email addresses linked to the company (e.g., contact@company.com, info@company.com).\\nPhone Numbers: Any phone numbers associated with the company (e.g., office, toll-free, or mobile numbers, including country codes if available).\\nOther Company Information: Additional relevant details about the company, such as:\\n- Company name\\n- Website URL\\n- Contact names or titles (e.g., CEO, manager)\\n- Social media handles or links\\n- Any other identifiable company-related data (e.g., registration number, VAT ID)\\n\\nEnsure the output is organized, readable, and free of errors. If the PDF contains multiple companies, include each company as a separate object in the 'companies' array.\"\n        },\n        {\n          \"inlineData\": {\n            \"mimeType\": \"application/pdf\",\n            \"data\": \"{{ $('Loop Attachments').item.binary.data.data }}\"\n          }\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        -280
+      ],
+      "id": "bf3a200c-50a5-415a-8942-76abaa20b4fb",
+      "name": "HTTP Request - Model Gemini - Extract Data",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const rawJson = $input.first().json.candidates[0].content.parts[0].text.replace(/```json|```/g, \"\").trim();\n  const data = JSON.parse(rawJson);\n\n  return data.companies.map(company => {\n    let paragraph = \"\";\n\n    for (const key in company) {\n      const value = company[key];\n\n      if (Array.isArray(value)) {\n        paragraph += `${key.replace(/s$/, \"\")}: ${value.join(\", \")}  `;\n      } else if (typeof value === 'object' && value !== null) {\n        for (const nestedKey in value) {\n          paragraph += `${nestedKey}: ${value[nestedKey]}  `;\n        }\n      } else if (typeof value === 'string') {\n        paragraph += `${key}: ${value.replace(/\\n/g, \" \")}  `;\n      } else {\n        paragraph += `${key}: ${value}  `;\n      }\n    }\n\n    return { json: { paragraph: paragraph.trim() } };\n  });\n} catch (error) {\n   throw new Error(error.message);\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        -480
+      ],
+      "id": "a19b928b-7445-4256-8c5c-7688d7ca88c3",
+      "name": "Simulate the Gemini API response",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/embeddings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"input\": \"{{ $input.all().map(item => item.json.paragraph).join(\"  \") }}\",\n  \"model\": \"text-embedding-3-small\"\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        -660
+      ],
+      "id": "2fb1de68-a4b2-48c5-8c56-515f4d87693f",
+      "name": "OpenAI embedding endpoint",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "8KgtMUq5fRaJWhJt",
+          "name": "GHL Authorization"
+        },
+        "httpBearerAuth": {
+          "id": "5PqWvffFuOPXHJYp",
+          "name": "OpenAI Authorization"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Logs Customer_sync\n",
+        "height": 220,
+        "width": 300,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1880,
+        -120
+      ],
+      "typeVersion": 1,
+      "id": "4328183e-a675-47b9-b57e-7b92958dedab",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://bbxozfkrbqodlucocfsr.supabase.co/rest/v1/rpc/find_similar_customer",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieG96ZmtyYnFvZGx1Y29jZnNyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTk4MDcxOCwiZXhwIjoyMDY3NTU2NzE4fQ.PRBHYu2ZiPNXcjCnouVSy6XkyH_bD2cATMoJdayZImo"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJieG96ZmtyYnFvZGx1Y29jZnNyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTk4MDcxOCwiZXhwIjoyMDY3NTU2NzE4fQ.PRBHYu2ZiPNXcjCnouVSy6XkyH_bD2cATMoJdayZImo"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query_embedding\": [{{ $json.data[0].embedding }}],\n  \"similarity_threshold\": 0.8\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1240,
+        -820
+      ],
+      "id": "4c659ab5-8c4a-4a7e-8771-ce1a389ad746",
+      "name": "Fetch Customer Code",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "let logs = [];\nlogs.push(\"Failed to retrieve the customer code.\");\nreturn [{ json: { \n       logs,\n      _processing_timestamp: new Date().toISOString(),\n      from_email: $('Loop Emails').first().json.from,\n      email_id:$('Loop Emails').first().json.conversationId,\n      file_name:$('Loop Attachments').first().binary.data.fileName,\n      stage:\"customer_sync\",\n      status:\"info\",\n      purchase_order_guid:null,\n      purchase_created: false,\n      purchase_supabase_id:null,\n      order_status:null\n      } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        -60
+      ],
+      "id": "08d4298a-f940-4c19-9ae2-eeb950b6769b",
+      "name": "Logs Customer Sync",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "40196603-6919-4b40-9e73-caab5bfa9655",
+              "leftValue": "={{ $json.code }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        -820
+      ],
+      "id": "3bf8e2a0-041f-4f3e-abd5-081a8faacb7f",
+      "name": "Code Exist"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2e9eaadf-974e-4554-bbea-bf88533f840e",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "8680f572-9ead-404d-98c5-46918e52558f",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2280,
+        -640
+      ],
+      "id": "18fa1d8e-ab52-417b-b96e-5029248da89b",
+      "name": "Check Status"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f13b2d75-ec0b-49bf-bd56-859261082654",
+              "leftValue": "={{ $('Refactor unleashed payload').first().json.order_data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e32b9128-333f-441a-98e0-d4372869ed1c",
+              "leftValue": "={{ $('Refactor unleashed payload').first().json.order_data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "163fa74b-3c86-4b1d-975f-bd21b926b510",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "error",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3840,
+        -260
+      ],
+      "id": "5db46c30-f951-471a-b8fe-5986be040cb1",
+      "name": "Order Data Exist"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ad292025-3c94-4dac-82f6-e58ed296ad01",
+              "leftValue": "={{ $json.order_data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "242eda25-4e47-4901-a30a-64eda79acef4",
+              "leftValue": "={{ $json.order_data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2580,
+        -380
+      ],
+      "id": "5abcfac7-6cf0-4342-9522-bbee189717d8",
+      "name": "Check Order Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    fail:true\n  }\n] ;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4500,
+        -60
+      ],
+      "id": "60e6df50-f002-4375-884c-05073b517b4f",
+      "name": "Fail Create Purchase Order"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Microsoft Outlook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Loop Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refactor unleashed payload": {
+      "main": [
+        [
+          {
+            "node": "Check Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Wait 5 second-1": {
+      "main": [
+        [
+          {
+            "node": "Loop Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5 second-2": {
+      "main": [
+        [
+          {
+            "node": "Loop Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Emails": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Create Attachments Array",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Loop Attachments": {
+      "main": [
+        [
+          {
+            "node": "Wait 5 second-1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "logs Format Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "HTTP Request - Model Gemini": {
+      "main": [
+        [
+          {
+            "node": "Refactor unleashed payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Logs Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Unleashed Software": {
+      "main": [
+        [
+          {
+            "node": "Logs Unleashed Software1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Error Unleashed Software",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Error Unleashed Software": {
+      "main": [
+        [
+          {
+            "node": "Logs Unleashed Software",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Attachments Array": {
+      "main": [
+        [
+          {
+            "node": "Loop Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Logs Proccing Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payload Logs": {
+      "main": [
+        []
+      ]
+    },
+    "Switch": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "Logs Loop Emails": {
+      "main": [
+        []
+      ]
+    },
+    "Logs Nor PDF": {
+      "main": [
+        [
+          {
+            "node": "Handle Global Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Logs Unleashed Software": {
+      "main": [
+        [
+          {
+            "node": "Order Data Exist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Logs Gemini": {
+      "main": [
+        [
+          {
+            "node": "Handle Global Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "logs Format Attachments": {
+      "main": [
+        []
+      ]
+    },
+    "Logs Proccing Attachments": {
+      "main": [
+        [
+          {
+            "node": "Handle Global Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Logs Unleashed Software1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "Post log": {
+      "main": [
+        [
+          {
+            "node": "If5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resend email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Purchase Order": {
+      "main": [
+        [
+          {
+            "node": "Handle Global Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resend email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Purchase Order Payload": {
+      "main": [
+        [
+          {
+            "node": "Post Purchase Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend email": {
+      "main": [
+        [
+          {
+            "node": "Wait 5 second-2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Global Payload": {
+      "main": [
+        [
+          {
+            "node": "Post log",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resend email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Purchase Order Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload File Supabase": {
+      "main": [
+        [
+          {
+            "node": "Post File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resend email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Binary Data": {
+      "main": [
+        [
+          {
+            "node": "Upload File Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post File": {
+      "main": [
+        [
+          {
+            "node": "Wait 5 second-2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resend email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If5": {
+      "main": [
+        [
+          {
+            "node": "Binary Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "If6": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Model Gemini - Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Logs Nor PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Model Gemini - Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Simulate the Gemini API response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Logs Customer Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simulate the Gemini API response": {
+      "main": [
+        [
+          {
+            "node": "OpenAI embedding endpoint",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Logs Customer Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI embedding endpoint": {
+      "main": [
+        [
+          {
+            "node": "Fetch Customer Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Logs Customer Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Customer Code": {
+      "main": [
+        [
+          {
+            "node": "Code Exist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Logs Customer Sync": {
+      "main": [
+        [
+          {
+            "node": "Handle Global Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Exist": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Model Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Logs Customer Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Status": {
+      "main": [
+        [
+          {
+            "node": "Post Unleashed Software",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Order Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Order Data Exist": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Fail Create Purchase Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Order Data": {
+      "main": [
+        [
+          {
+            "node": "Post Unleashed Software",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Global Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fail Create Purchase Order": {
+      "main": [
+        [
+          {
+            "node": "Handle Global Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "814aa208-9581-4cda-8020-ed74e3493084",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26789e5062454142cf2f79aedae00f5e320e7af700d4261f9eb8c6bf55293821"
+  },
+  "id": "F0ZsLF2KDa2FW6ym",
+  "tags": []
+}
