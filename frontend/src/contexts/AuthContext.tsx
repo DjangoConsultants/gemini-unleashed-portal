@@ -13,7 +13,6 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-
 // Create the context with a default null value
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -37,8 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const timeoutRef = useRef<NodeJS.Timeout>();
   const warningTimeoutRef = useRef<NodeJS.Timeout>();
   const warningShownRef = useRef(false);
-  const timeoutDuration = 24 * 60 * 60 * 1000; // 24 hours
-  const warningDuration = 60 * 60 * 1000;      // 1 hour warning
+  const timeoutDuration = 8 * 60 * 60 * 1000; // 8 hours
+  const warningDuration = 30 * 60 * 1000;     // 30 minute warning
 
   // Sign out function
   const signOut = async () => {
@@ -82,8 +81,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         warningShownRef.current = true;
         toast({
           title: "Session Expiring Soon",
-          description: `Your session will expire in ${Math.round(warningDuration / 60000)} minutes due to inactivity.`,
-          variant: "destructive",
+          description: `Your session will expire in ${Math.round(warningDuration / 60000)} minutes due to inactivity. Please save your work.`,
+          variant: "default",
         });
       }
     }, timeoutDuration - warningDuration);
@@ -92,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     timeoutRef.current = setTimeout(() => {
       toast({
         title: "Session Expired",
-        description: "You have been logged out due to inactivity.",
+        description: "Your 8-hour session has expired. Please log in again to continue.",
         variant: "destructive",
       });
       signOut();
@@ -151,8 +150,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Set up auth state listener FIRST - this is critical for proper session management
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+      (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email || 'No user');
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -188,7 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         toast({
           title: "Welcome back!",
-          description: "You've successfully signed in to Holloway Logs.",
+          description: "You've successfully signed in to Holloway Logs. Your session will expire after 8 hours of inactivity.",
         });
       }
 
