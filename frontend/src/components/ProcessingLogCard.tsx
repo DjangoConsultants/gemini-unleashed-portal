@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronDown, ChevronUp, Download, Eye, Clock, Mail, File, Settings, Loader } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import type { ProcessingLog } from '@/hooks/useProcessingLogs';
-import { PurchaseOrderDetailsDialog } from './PurchaseOrderDetailsDialog';
 
 interface ProcessingLogCardProps {
   log: ProcessingLog;
@@ -24,9 +24,9 @@ export const ProcessingLogCard: React.FC<ProcessingLogCardProps> = ({
   onOrderStatusUpdate
 }) => {
   const [isLogsOpen, setIsLogsOpen] = useState(false);
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString('en-US', {
@@ -73,6 +73,13 @@ export const ProcessingLogCard: React.FC<ProcessingLogCardProps> = ({
   const isDetailsDisabled = log.purchase_supabase_id == null;
   const canUpdateOrderStatus = log.purchase_order_guid != null;
   const orderStatuses = ['Parked', 'Placed', 'Backordered'];
+
+  const handleDetailsClick = () => {
+    if (isDetailsDisabled) return;
+    
+    const url = `/purchase-order/${log.purchase_supabase_id}${log.id ? `/${log.id}` : ''}`;
+    navigate(url);
+  };
 
   const handleOrderStatusUpdate = async (newStatus: string) => {
     if (!canUpdateOrderStatus) return;
@@ -218,7 +225,7 @@ export const ProcessingLogCard: React.FC<ProcessingLogCardProps> = ({
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
           <Button
-            onClick={() => setIsDetailsDialogOpen(true)}
+            onClick={handleDetailsClick}
             disabled={isDetailsDisabled}
             variant="outline"
             size="sm"
@@ -249,12 +256,6 @@ export const ProcessingLogCard: React.FC<ProcessingLogCardProps> = ({
           </Button>
         </div>
       </CardContent>
-
-      <PurchaseOrderDetailsDialog
-        open={isDetailsDialogOpen}
-        onOpenChange={setIsDetailsDialogOpen}
-        purchaseSupabaseId={log.purchase_supabase_id}
-      />
     </Card>
   );
 };
