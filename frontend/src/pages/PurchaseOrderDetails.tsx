@@ -211,10 +211,45 @@ export const PurchaseOrderDetails: React.FC = () => {
           </Button>
           <h1 className="text-2xl font-bold">Purchase Order Details</h1>
         </div>
+        
 
         {/* Main Content */}
         <div className="flex gap-6 h-[calc(100vh-160px)]">
           {/* Left side - Order Details */}
+          {processingLogId && (
+            <div className="w-1/2 border-l pl-6 flex flex-col">
+              {/* <div className="flex items-center gap-2 mb-4">
+                <FileText className="w-5 h-5" />
+                <h3 className="text-lg font-semibold">Associated PDF</h3>
+              </div> */}
+              
+              {pdfLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader className="w-6 h-6 animate-spin" />
+                  <span className="ml-2">Loading PDF...</span>
+                </div>
+              )}
+
+              {pdfError && (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  <span>{pdfError}</span>
+                </div>
+              )}
+
+              {pdfUrl && !pdfLoading && !pdfError && (
+                <div className="flex-1 border rounded-lg overflow-hidden bg-card">
+                  <iframe
+                    src={pdfUrl}
+                    className="w-full h-full"
+                    title="Purchase Order PDF"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Right side - PDF Viewer */}
           <div className="flex-1 overflow-y-auto space-y-6 pr-4">
             {/* Order Overview */}
             <div className="bg-card rounded-lg p-6 shadow-sm border">
@@ -307,39 +342,6 @@ export const PurchaseOrderDetails: React.FC = () => {
             </div>
           </div>
 
-          {/* Right side - PDF Viewer */}
-          {processingLogId && (
-            <div className="w-1/2 border-l pl-6 flex flex-col">
-              <div className="flex items-center gap-2 mb-4">
-                <FileText className="w-5 h-5" />
-                <h3 className="text-lg font-semibold">Associated PDF</h3>
-              </div>
-              
-              {pdfLoading && (
-                <div className="flex items-center justify-center py-8">
-                  <Loader className="w-6 h-6 animate-spin" />
-                  <span className="ml-2">Loading PDF...</span>
-                </div>
-              )}
-
-              {pdfError && (
-                <div className="flex items-center justify-center py-8 text-muted-foreground">
-                  <AlertCircle className="w-5 h-5 mr-2" />
-                  <span>{pdfError}</span>
-                </div>
-              )}
-
-              {pdfUrl && !pdfLoading && !pdfError && (
-                <div className="flex-1 border rounded-lg overflow-hidden bg-card">
-                  <iframe
-                    src={pdfUrl}
-                    className="w-full h-full"
-                    title="Purchase Order PDF"
-                  />
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>

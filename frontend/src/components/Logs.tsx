@@ -50,7 +50,7 @@ export const Logs: React.FC = () => {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-foreground mb-2">
-            Welcome back, {user?.email?.split('@')[0]}! 👋
+            Welcome Back, {user?.email?.split('@')[0].charAt(0).toUpperCase() + user?.email?.split('@')[0].slice(1)}!
           </h2>
           <p className="text-muted-foreground">
             Here's your secure access to the Holloway Group log monitoring system.
