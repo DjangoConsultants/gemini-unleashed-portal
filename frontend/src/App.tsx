@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Login } from "@/pages/Login";
 import { Logs } from "@/components/Logs";
+import { PurchaseOrderDetails } from "@/pages/PurchaseOrderDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,9 +50,19 @@ const App = () => (
               }
             />
             
+            {/* Purchase Order Details route */}
+            <Route
+              path="/purchase-order/:purchaseSupabaseId/:processingLogId?"
+              element={
+                <ProtectedRoute>
+                  <PurchaseOrderDetails />
+                </ProtectedRoute>
+              }
+            />
+            
             {/* Login route - redirects authenticated users */}
             <Route path="/login" element={<LoginRedirect />} />
-            
+
             {/* Catch-all route for 404 */}
             <Route path="*" element={<NotFound />} />
           </Routes>
