@@ -52,11 +52,11 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// Holloway brand colors
-				holloway: {
-					red: 'hsl(var(--holloway-red))',
-					black: 'hsl(var(--holloway-black))',
-					white: 'hsl(var(--holloway-white))'
+				// Brand colors
+				brand: {
+					yellow: 'hsl(var(--brand-yellow))',
+					black: 'hsl(var(--brand-black))',
+					gray: 'hsl(var(--brand-gray))'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',

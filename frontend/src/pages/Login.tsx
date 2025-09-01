@@ -43,13 +43,15 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
       <div className="w-full max-w-md">
-        {/* Holloway Group Header */}
+        {/* Logo Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-xl mb-4 shadow-lg">
-            <Shield className="w-8 h-8 text-primary-foreground" />
+          <div className="inline-flex items-center justify-center mb-4">
+            <img 
+              src="/logo.png" 
+              alt="Holloway Group Logo" 
+              className="w-[200px] sm:w-[250px] md:w-[300px] h-auto" 
+            />
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Holloway Group</h1>
-          <p className="text-muted-foreground">Secure access to your logs</p>
         </div>
 
         {/* Authentication Card */}

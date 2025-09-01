@@ -17,15 +17,15 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    /* Holloway Group primary red */
-    --primary: 351 84% 44%;
-    --primary-foreground: 0 0% 100%;
+    /* Custom brand colors */
+    --primary: 43 97% 54%;
+    --primary-foreground: 0 0% 0%;
 
     --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary-foreground: 0 0% 39%;
 
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted-foreground: 0 0% 39%;
 
     --accent: 0 0% 96%;
     --accent-foreground: 0 0% 0%;
@@ -35,19 +35,19 @@ All colors MUST be HSL.
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 351 84% 44%;
+    --ring: 43 97% 54%;
 
-    /* Holloway brand colors */
-    --holloway-red: 351 84% 44%;
-    --holloway-black: 0 0% 0%;
-    --holloway-white: 0 0% 100%;
+    /* Brand colors */
+    --brand-yellow: 43 97% 54%;
+    --brand-black: 0 0% 0%;
+    --brand-gray: 0 0% 39%;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--holloway-red)), hsl(351 84% 35%));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--brand-yellow)), hsl(43 97% 45%));
     --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(0 0% 98%));
     
     /* Shadows */
-    --shadow-elegant: 0 10px 30px -10px hsl(var(--holloway-red) / 0.1);
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--brand-yellow) / 0.2);
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.08);
     
     /* Transitions */
