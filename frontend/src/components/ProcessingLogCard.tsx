@@ -65,6 +65,8 @@ export const ProcessingLogCard: React.FC<ProcessingLogCardProps> = ({
         return <Settings className="w-4 h-4" />;
       case 'customer_sync':
         return <Settings className="w-4 h-4" />;
+      case 'customer_product_sync':
+        return <Settings className="w-4 h-4" />;
       default:
         return <Settings className="w-4 h-4" />;
     }

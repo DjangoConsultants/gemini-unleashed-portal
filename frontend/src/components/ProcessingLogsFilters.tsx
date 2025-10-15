@@ -60,7 +60,8 @@ export const ProcessingLogsFilterPanel: React.FC<ProcessingLogsFiltersComponentP
     'ai_parsing',
     'parse_json_ai_response',
     'unleashed_sync',
-    'customer_sync'
+    'customer_sync',
+    'customer_product_sync'
   ];
 
   const statuses = ['error', 'info', 'success'];
